@@ -91,7 +91,7 @@ export default function App() {
   };
 
   return (
-    <div className="h-screen bg-[#0a0a0b] text-white font-sans overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-[#0a0a0b] text-white font-sans overflow-hidden flex flex-col">
       {/* Background Atmosphere */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute top-0 left-0 w-full h-[60%] bg-linear-to-b from-indigo-900/20 to-transparent opacity-40 blur-[100px]" />
