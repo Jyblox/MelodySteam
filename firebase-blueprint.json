@@ -1,0 +1,55 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and subscription status",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "isPremium": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "isPremium"]
+    },
+    "Playlist": {
+      "title": "Playlist",
+      "description": "User-created music playlist",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "songIds": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "name"]
+    },
+    "LikedSong": {
+      "title": "LikedSong",
+      "description": "Songs liked by a user",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "songId": { "type": "string" },
+        "likedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "songId"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Stores user profiles and subscription status"
+    },
+    "/playlists/{playlistId}": {
+      "schema": "Playlist",
+      "description": "Stores user-created playlists"
+    },
+    "/users/{userId}/likedSongs/{songId}": {
+      "schema": "LikedSong",
+      "description": "Stores a user's liked songs"
+    }
+  }
+}
