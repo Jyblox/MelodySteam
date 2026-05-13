@@ -130,7 +130,7 @@ export function SettingsView({ user }: { user: any }) {
 function SettingsItem({ icon, label }: { icon: React.ReactNode, label: string }) {
   return (
     <button 
-      onClick={() => alert(`Coming Soon: ${label}`)}
+      onClick={() => alert(`Because this app is deployed statically on GitHub Pages, the "${label}" feature (which requires a Node.js backend) is unavailable. Deploy to Cloud Run to fix backend features.`)}
       className="w-full flex items-center justify-between p-4 rounded-2xl bg-[#18181b] border border-white/5 hover:bg-white/5 transition-all group shadow-sm"
     >
       <div className="flex items-center gap-4">

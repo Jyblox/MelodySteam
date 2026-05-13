@@ -40,7 +40,7 @@ export function LibraryView() {
         {activeSubTab === 'playlists' && (
           <div className="grid grid-cols-2 gap-4">
             <div 
-              onClick={() => alert('Coming Soon: Custom Playlists')}
+              onClick={() => alert('Because you published this site as a static application on GitHub Pages, backend functionality like Custom Playlists, Payments, and Search will not work! They require a Node.js server. Please use Render or Cloud Run for Full-Stack apps.')}
               className="bg-[#18181b] aspect-square rounded-3xl border border-white/5 flex flex-col items-center justify-center gap-4 group cursor-pointer hover:bg-white/10 transition-all overflow-hidden relative shadow-lg"
             >
               <div className="bg-cyan-500/10 p-6 rounded-full text-cyan-400 group-hover:scale-110 transition-transform">

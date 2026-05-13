@@ -25,10 +25,16 @@ export function HomeView({ isSearch, onSearch }: { isSearch?: boolean, onSearch?
         setLoading(true);
         try {
           const res = await axios.get(`/api/search?q=${encodeURIComponent(searchQuery)}`);
-          setResults(res.data);
+          if (Array.isArray(res.data)) {
+            setResults(res.data);
+          } else {
+            console.error("Invalid API response", res.data);
+            setResults([]);
+          }
           if (onSearch) onSearch();
         } catch (error) {
-          console.error(error);
+          console.error("Search error:", error);
+          setResults([]);
         } finally {
           setLoading(false);
         }

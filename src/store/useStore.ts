@@ -28,8 +28,14 @@ export const useStore = create<PlayerState>((set, get) => ({
   currentSong: null,
   isPlaying: false,
   queue: [],
-  history: JSON.parse(localStorage.getItem('history') || '[]'),
-  downloads: JSON.parse(localStorage.getItem('downloads') || '[]'),
+  history: (() => {
+    try { return JSON.parse(localStorage.getItem('history') || '[]'); } 
+    catch { return []; }
+  })() || [],
+  downloads: (() => {
+    try { return JSON.parse(localStorage.getItem('downloads') || '[]'); } 
+    catch { return []; }
+  })() || [],
   isPremium: false,
   setSong: (song) => set((state) => {
     const newHistory = [song, ...state.history.filter(s => s.id !== song.id)].slice(0, 50);
