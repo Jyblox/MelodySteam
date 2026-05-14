@@ -1,7 +1,7 @@
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
-import youtube from "youtube-search-api";
+import axios from "axios";
 
 async function startServer() {
   const app = express();
@@ -19,22 +19,62 @@ async function startServer() {
     }
   });
 
-  // Real YouTube Search Proxy
+  // Jamendo Search Proxy
   app.get("/api/search", async (req, res) => {
     const query = req.query.q as string;
     try {
-      const result = await youtube.GetListByKeyword(query, false, 10, [{ type: 'video' }]);
-      const formatted = result.items.map((item: any) => ({
-        id: item.id,
-        title: item.title,
-        artist: item.channelTitle || "YouTube Music",
-        duration: item.length?.accessibility?.accessibilityData?.label || "4:00",
-        thumbnail: item.thumbnail?.thumbnails?.[0]?.url || "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=300&h=300&fit=crop"
-      }));
+      const response = await fetch(`https://api.jamendo.com/v3.0/tracks/?client_id=c9cb2a0a&search=${encodeURIComponent(query)}&limit=15&format=json`);
+      const jamendoData = await response.json();
+      
+      const formatted = (jamendoData.results || []).map((item: any) => {
+        const formatDuration = (secs: number) => {
+          const m = Math.floor(secs / 60);
+          const s = secs % 60;
+          return `${m}:${s.toString().padStart(2, '0')}`;
+        };
+
+        return {
+          id: item.id,
+          title: item.name,
+          artist: item.artist_name,
+          duration: formatDuration(item.duration),
+          thumbnail: item.image,
+          streamUrl: item.audio
+        };
+      });
       res.json(formatted);
     } catch (error) {
       console.error("Search Error:", error);
-      res.status(500).json({ error: "Failed to fetch from YouTube" });
+      res.status(500).json({ error: "Failed to fetch from Jamendo" });
+    }
+  });
+
+  // Jamendo Trending Endpoint
+  app.get("/api/trending", async (req, res) => {
+    try {
+      const response = await fetch(`https://api.jamendo.com/v3.0/tracks/?client_id=c9cb2a0a&order=popularity_week&limit=10&format=json`);
+      const jamendoData = await response.json();
+      
+      const formatted = (jamendoData.results || []).map((item: any) => {
+        const formatDuration = (secs: number) => {
+          const m = Math.floor(secs / 60);
+          const s = secs % 60;
+          return `${m}:${s.toString().padStart(2, '0')}`;
+        };
+
+        return {
+          id: item.id,
+          title: item.name,
+          artist: item.artist_name,
+          duration: formatDuration(item.duration),
+          thumbnail: item.image,
+          streamUrl: item.audio
+        };
+      });
+      res.json(formatted);
+    } catch (error) {
+      console.error("Trending Error:", error);
+      res.status(500).json({ error: "Failed to fetch trending from Jamendo" });
     }
   });
 

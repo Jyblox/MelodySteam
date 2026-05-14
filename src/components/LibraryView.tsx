@@ -4,7 +4,14 @@ import { useStore } from '../store/useStore';
 
 export function LibraryView() {
   const [activeSubTab, setActiveSubTab] = useState<'playlists' | 'liked' | 'downloads'>('playlists');
-  const { downloads, setSong } = useStore();
+  const { downloads, playlists, createPlaylist, setSong } = useStore();
+
+  const handleCreatePlaylist = () => {
+    const name = prompt("Enter playlist name:");
+    if (name) {
+      createPlaylist(name);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -40,7 +47,7 @@ export function LibraryView() {
         {activeSubTab === 'playlists' && (
           <div className="grid grid-cols-2 gap-4">
             <div 
-              onClick={() => alert('Because you published this site as a static application on GitHub Pages, backend functionality like Custom Playlists, Payments, and Search will not work! They require a Node.js server. Please use Render or Cloud Run for Full-Stack apps.')}
+              onClick={handleCreatePlaylist}
               className="bg-[#18181b] aspect-square rounded-3xl border border-white/5 flex flex-col items-center justify-center gap-4 group cursor-pointer hover:bg-white/10 transition-all overflow-hidden relative shadow-lg"
             >
               <div className="bg-cyan-500/10 p-6 rounded-full text-cyan-400 group-hover:scale-110 transition-transform">
@@ -48,21 +55,29 @@ export function LibraryView() {
               </div>
               <span className="font-bold text-sm">Create New</span>
             </div>
-            <div 
-              onClick={() => alert('Coming Soon: Opening Playlists')}
-              className="bg-[#18181b] aspect-square rounded-3xl border border-white/5 p-4 flex flex-col justify-between group cursor-pointer hover:bg-white/10 transition-all shadow-lg"
-            >
-               <div className="grid grid-cols-2 gap-1 rounded-xl overflow-hidden aspect-square">
-                 <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=100&h=100&fit=crop" className="w-full h-full" />
-                 <img src="https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=100&h=100&fit=crop" className="w-full h-full" />
-                 <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=100&h=100&fit=crop" className="w-full h-full" />
-                 <img src="https://images.unsplash.com/photo-1459749411177-042180ce673c?w=100&h=100&fit=crop" className="w-full h-full" />
-               </div>
-               <div>
-                 <h4 className="font-bold group-hover:text-cyan-400 transition-colors">Heavy Beats</h4>
-                 <p className="text-[10px] text-white/40 uppercase tracking-widest">12 Songs</p>
-               </div>
-            </div>
+            {playlists.map(playlist => (
+              <div 
+                key={playlist.id}
+                onClick={() => {
+                  if (playlist.songs.length > 0) {
+                    setSong(playlist.songs[0]);
+                  } else {
+                    alert(`${playlist.name} is empty!`);
+                  }
+                }}
+                className="bg-[#18181b] aspect-square rounded-3xl border border-white/5 p-4 flex flex-col justify-between group cursor-pointer hover:bg-white/10 transition-all shadow-lg"
+              >
+                 <div className="grid grid-cols-2 gap-1 rounded-xl overflow-hidden aspect-square border border-white/5 bg-white/5">
+                   {playlist.songs.map((song, i) => (
+                     i < 4 && <img key={song.id} src={song.thumbnail} className="w-full h-full object-cover" />
+                   ))}
+                 </div>
+                 <div>
+                   <h4 className="font-bold group-hover:text-cyan-400 transition-colors truncate">{playlist.name}</h4>
+                   <p className="text-[10px] text-white/40 uppercase tracking-widest">{playlist.songs.length} Songs</p>
+                 </div>
+              </div>
+            ))}
           </div>
         )}
 

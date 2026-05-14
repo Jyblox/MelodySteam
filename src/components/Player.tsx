@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Play, Pause, SkipForward, SkipBack, Heart, Download, ChevronDown, ListMusic, Repeat, Shuffle } from 'lucide-react';
 import { useStore } from '../store/useStore';
-import ReactPlayer from 'react-player';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -16,7 +15,21 @@ export function Player({ onDownload, onSkip }: { onDownload: () => void, onSkip:
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [played, setPlayed] = useState(0);
+  const [streamUrl, setStreamUrl] = useState<string | undefined>();
   const playerRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (currentSong) {
+      if (currentSong.streamUrl) {
+         setStreamUrl(currentSong.streamUrl);
+      } else {
+         // Fallback if somehow there's no streamUrl (e.g. old history)
+         setStreamUrl(`https://api.jamendo.com/v3.0/tracks/file/?client_id=c9cb2a0a&action=stream&audioformat=mp32&id=${currentSong.id}`);
+      }
+    } else {
+      setStreamUrl(undefined);
+    }
+  }, [currentSong]);
 
   useEffect(() => {
     if (isExpanded) {
@@ -27,20 +40,18 @@ export function Player({ onDownload, onSkip }: { onDownload: () => void, onSkip:
     return () => { document.body.style.overflow = 'unset'; };
   }, [isExpanded]);
 
-  if (!currentSong) return null;
-
-  const handleProgress = (state: any) => {
-    setPlayed(state.playedSeconds);
-    setProgress(state.played * 100);
-    // Fallback duration update
-    if (duration === 0 && playerRef.current) {
-      setDuration(playerRef.current.getDuration());
+  useEffect(() => {
+    if (playerRef.current) {
+      if (isPlaying && currentSong) {
+        const playPromise = playerRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((e: Error) => console.log('Playback interrupted:', e));
+        }
+      } else {
+        playerRef.current.pause();
+      }
     }
-  };
-
-  const handleReady = (player: any) => {
-    setDuration(player.getDuration());
-  };
+  }, [isPlaying, currentSong]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -48,33 +59,38 @@ export function Player({ onDownload, onSkip }: { onDownload: () => void, onSkip:
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const PlayerComponent = ReactPlayer as any;
-
   return (
     <>
-      <div className="hidden">
-        <PlayerComponent
-          ref={playerRef}
-          url={`https://www.youtube.com/watch?v=${currentSong.id}`}
-          playing={isPlaying}
-          onProgress={handleProgress}
-          onReady={handleReady}
-          onEnded={() => {
-            onSkip();
-            nextSong();
-          }}
-          config={{
-            youtube: {
-              playerVars: { 
-                autoplay: 1,
-                origin: typeof window !== 'undefined' ? window.location.origin : ''
+      <div className="fixed bottom-0 right-0 w-32 h-32 opacity-0 pointer-events-none z-[-1]">
+          <audio
+            ref={playerRef}
+            src={streamUrl}
+            autoPlay={true}
+            onTimeUpdate={(e) => {
+              const target = e.target as HTMLAudioElement;
+              setPlayed(target.currentTime);
+              setProgress((target.currentTime / target.duration) * 100);
+            }}
+            onLoadedMetadata={(e) => {
+              const target = e.target as HTMLAudioElement;
+              setDuration(target.duration);
+            }}
+            onEnded={() => {
+              if (currentSong) {
+                onSkip();
+                nextSong();
               }
-            }
-          }}
-        />
+            }}
+            onError={(e) => {
+              console.error("Audio error:", (e.target as HTMLAudioElement).error);
+            }}
+          />
       </div>
-      {/* Mini Player */}
-      <motion.div 
+
+      {!currentSong ? null : (
+        <>
+          {/* Mini Player */}
+          <motion.div 
         layoutId="player"
         onClick={() => setIsExpanded(true)}
         className={cn(
@@ -121,7 +137,23 @@ export function Player({ onDownload, onSkip }: { onDownload: () => void, onSkip:
                 <ChevronDown size={28} />
               </button>
               <h5 className="uppercase tracking-[0.2em] text-[10px] font-bold text-white/40">Now Playing</h5>
-              <button className="p-2 text-white/60 hover:text-white">
+              <button 
+                onClick={() => {
+                  const { playlists, addSongToPlaylist } = useStore.getState();
+                  if (playlists.length === 0) {
+                    alert("You don't have any playlists yet! Go to Library to create one.");
+                    return;
+                  }
+                  const playlistNames = playlists.map((p, i) => `${i + 1}: ${p.name}`).join('\n');
+                  const input = prompt(`Enter the number of the playlist to add this song to:\n${playlistNames}`);
+                  const idx = parseInt(input || '') - 1;
+                  if (!isNaN(idx) && playlists[idx]) {
+                    addSongToPlaylist(playlists[idx].id, currentSong);
+                    alert(`Added to ${playlists[idx].name}!`);
+                  }
+                }}
+                className="p-2 text-white/60 hover:text-white"
+              >
                 <ListMusic size={24} />
               </button>
             </div>
@@ -193,6 +225,8 @@ export function Player({ onDownload, onSkip }: { onDownload: () => void, onSkip:
           </motion.div>
         )}
       </AnimatePresence>
+        </>
+      )}
     </>
   );
 }

@@ -6,6 +6,7 @@ interface Song {
   artist: string;
   duration: string;
   thumbnail: string;
+  streamUrl?: string;
 }
 
 interface PlayerState {
@@ -14,6 +15,7 @@ interface PlayerState {
   queue: Song[];
   history: Song[];
   downloads: Song[];
+  playlists: { id: string, name: string, songs: Song[] }[];
   isPremium: boolean;
   setSong: (song: Song) => void;
   togglePlay: () => void;
@@ -22,6 +24,8 @@ interface PlayerState {
   nextSong: () => void;
   prevSong: () => void;
   downloadSong: (song: Song) => void;
+  createPlaylist: (name: string) => void;
+  addSongToPlaylist: (playlistId: string, song: Song) => void;
 }
 
 export const useStore = create<PlayerState>((set, get) => ({
@@ -34,6 +38,10 @@ export const useStore = create<PlayerState>((set, get) => ({
   })() || [],
   downloads: (() => {
     try { return JSON.parse(localStorage.getItem('downloads') || '[]'); } 
+    catch { return []; }
+  })() || [],
+  playlists: (() => {
+    try { return JSON.parse(localStorage.getItem('playlists') || '[]'); } 
     catch { return []; }
   })() || [],
   isPremium: false,
@@ -74,5 +82,21 @@ export const useStore = create<PlayerState>((set, get) => ({
       : [...state.downloads, song];
     localStorage.setItem('downloads', JSON.stringify(newDownloads));
     return { downloads: newDownloads };
+  }),
+  createPlaylist: (name) => set((state) => {
+    const newPlaylists = [...state.playlists, { id: Date.now().toString(), name, songs: [] }];
+    localStorage.setItem('playlists', JSON.stringify(newPlaylists));
+    return { playlists: newPlaylists };
+  }),
+  addSongToPlaylist: (playlistId, song) => set((state) => {
+    const newPlaylists = state.playlists.map(p => {
+      if (p.id === playlistId) {
+        if (p.songs.some(s => s.id === song.id)) return p;
+        return { ...p, songs: [...p.songs, song] };
+      }
+      return p;
+    });
+    localStorage.setItem('playlists', JSON.stringify(newPlaylists));
+    return { playlists: newPlaylists };
   }),
 }));

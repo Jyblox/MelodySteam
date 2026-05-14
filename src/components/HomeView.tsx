@@ -1,34 +1,44 @@
 import { useState, useEffect } from 'react';
 import { Search, Play, MoreVertical, Loader2 } from 'lucide-react';
 import { useStore } from '../store/useStore';
-import axios from 'axios';
 
 export function HomeView({ isSearch, onSearch }: { isSearch?: boolean, onSearch?: () => void }) {
   const { setSong, history } = useStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [trending, setTrending] = useState<any[]>([]);
+  const [loadingTrending, setLoadingTrending] = useState(true);
 
   // Deduplicate history to show unique recently played songs
   const recentPlayed = history.filter((song, index, self) =>
     index === self.findIndex((s) => s.id === song.id)
   ).slice(0, 10);
 
-  const trending = [
-    { id: "1", title: "Recent Hit", artist: "MelodyStream", duration: "3:50", thumbnail: "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=300&h=300&fit=crop" },
-    { id: "2", title: "Vibe Mix", artist: "MelodyStream", duration: "4:03", thumbnail: "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=300&h=300&fit=crop" },
-  ];
+  useEffect(() => {
+    // Fetch real trending tracks
+    fetch('/api/trending')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setTrending(data);
+        setLoadingTrending(false);
+      })
+      .catch(err => {
+        console.error("Failed to load trending", err);
+        setLoadingTrending(false);
+      });
+  }, []);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
       if (searchQuery.length > 2) {
         setLoading(true);
         try {
-          const res = await axios.get(`/api/search?q=${encodeURIComponent(searchQuery)}`);
-          if (Array.isArray(res.data)) {
-            setResults(res.data);
+          const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
+          const formatted = await res.json();
+          if (Array.isArray(formatted)) {
+            setResults(formatted);
           } else {
-            console.error("Invalid API response", res.data);
             setResults([]);
           }
           if (onSearch) onSearch();

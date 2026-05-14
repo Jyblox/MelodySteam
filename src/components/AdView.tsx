@@ -61,8 +61,11 @@ export function AdView({ onClose }: { onClose: () => void }) {
           <p className="text-xl text-white/60">Unlock offline downloads, ad-free listening, and high-fidelity audio today.</p>
         </div>
 
-        <button className="w-full bg-cyan-500 text-black py-5 rounded-2xl font-bold text-xl shadow-[0_0_40px_rgba(34,211,238,0.3)] flex items-center justify-center gap-3 active:scale-95 transition-transform hover:bg-cyan-400">
-          Learn More
+        <button 
+          onClick={onClose}
+          className="w-full bg-cyan-500 text-black py-5 rounded-2xl font-bold text-xl shadow-[0_0_40px_rgba(34,211,238,0.3)] flex items-center justify-center gap-3 active:scale-95 transition-transform hover:bg-cyan-400"
+        >
+          Get Free Premium (Go to Settings)
           <ExternalLink size={24} />
         </button>
       </div>

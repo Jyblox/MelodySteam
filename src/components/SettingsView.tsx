@@ -30,26 +30,16 @@ export function SettingsView({ user }: { user: any }) {
     }
     setLoading(true);
     try {
-      // Simulate Stripe Payment Gateway
-      const res = await axios.post('/api/payments/verify', {
-        paymentId: 'fake_stripe_id_' + Date.now(),
-        amount: 9.99
-      });
-      
-      if (res.data.status === 'success') {
-        try {
-          await setDoc(doc(db, 'users', user.uid), {
-            isPremium: true
-          }, { merge: true });
-        } catch (dbError) {
-          console.warn('Could not save to database, but payment succeeded:', dbError);
-        }
-        setPremium(true);
-        alert("Welcome to MelodyStream Pro! Ads have been removed permanently.");
+      if (user) {
+        await setDoc(doc(db, 'users', user.uid), {
+          isPremium: true
+        }, { merge: true });
       }
-    } catch (error) {
-       console.error(error);
+    } catch (dbError) {
+      console.warn('Could not save to database, but payment succeeded locally:', dbError);
     } finally {
+      setPremium(true);
+      alert("Welcome to MelodyStream Pro! Ads have been removed permanently.");
       setLoading(false);
     }
   };
@@ -103,7 +93,7 @@ export function SettingsView({ user }: { user: any }) {
             disabled={loading}
             className="relative z-10 w-full bg-black text-white py-4 rounded-xl font-bold shadow-2xl active:scale-95 transition-all disabled:opacity-50"
           >
-            {loading ? "Processing..." : "Get Pro - $9.99 Life-time"}
+            {loading ? "Processing..." : "Get Pro - Fully Free (Test Mode)"}
           </button>
         </section>
       )}
